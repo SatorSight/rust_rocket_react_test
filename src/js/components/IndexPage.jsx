@@ -24,6 +24,14 @@ class IndexPage extends React.Component {
             })
     }
 
+    addUserStaging = () => {
+        fetch('http://localhost:8000/add_user', {
+            method: 'post'
+        })
+            .then(r => r.json())
+            .then(r => console.log(r))
+    };
+
     render() {
         return (
             <div className="container">
@@ -37,6 +45,7 @@ class IndexPage extends React.Component {
                         <div key={staging.id}>{staging.name}</div>
                     )}
                 </div>
+                <button onClick={this.addUserStaging}>click me</button>
             </div>
         );
     }

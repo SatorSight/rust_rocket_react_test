@@ -39,29 +39,61 @@ pub fn establish_connection() -> PgConnection {
 struct TemplateData {
     users: Vec<User>,
     stagings: Vec<Staging>,
+    users_stagings: Vec<UsersStaging>,
 }
+
+//#[post("/")]
+//fn add_user() -> Result<String> {
+//    let connection = establish_connection();
+//    let user = diesel::update(posts.find(id))
+//        .set(published.eq(true))
+//        .get_result::<Post>(&connection)
+//        .expect(&format!("Unable to find post {}", id));
+//
+//    let res = serde_json::to_string("ok");
+//    return res
+//}
 
 #[get("/")]
 fn index() -> Result<String> {
     use self::schema::users::dsl::*;
     use self::schema::stagings::dsl::*;
+    use self::schema::users_stagings::dsl::*;
+    use diesel::pg::expression::dsl::any;
+
 
     let connection = establish_connection();
     let user_results = users //.filter(published.eq(true))
-        .limit(5)
+//        .limit(5)
         .load::<User>(&connection)
         .expect("Error loading users");
 
     let stagings_results = stagings
-        .limit(5)
+//        .limit(5)
         .load::<Staging>(&connection)
         .expect("Error loading stagings");
+
+    let us = users_stagings
+        .load::<UsersStaging>(&connection)
+        .expect("Error loading stagings");
+
+
+//    let image_tag_ids = ImageTag::belonging_to(img).select(image_tags::tag_id);
+//    tags::table
+//        .filter(tags::id.eq(any(image_tag_ids)))
+//        .load::<Tag>(conn)
+//        .expect("could not load tags")
+
 
 //    let mut context = Context::new();
 //    let mut tera = Tera::default();
 //    tera.autoescape_on(vec![]);
 
-    let template_data = TemplateData { users: user_results, stagings: stagings_results };
+    let template_data = TemplateData {
+        users: user_results,
+        stagings: stagings_results,
+        users_stagings: us
+    };
 //    let payload = serde_json::to_string(&template_data).unwrap();
 //    println!("{}", payload);
 //
