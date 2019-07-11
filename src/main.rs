@@ -25,6 +25,13 @@ use dotenv::dotenv;
 use std::env;
 use self::models::*;
 use serde_json::*;
+use rocket_contrib::json::Json;
+
+use self::schema::users::dsl::*;
+use self::schema::stagings::dsl::*;
+use self::schema::users_stagings::dsl::*;
+use diesel::pg::expression::dsl::any;
+use self::models::{User, NewUser};
 
 pub fn establish_connection() -> PgConnection {
     dotenv().ok();
@@ -42,34 +49,71 @@ struct TemplateData {
     users_stagings: Vec<UsersStaging>,
 }
 
-//#[post("/")]
-//fn add_user() -> Result<String> {
-//    let connection = establish_connection();
-//    let user = diesel::update(posts.find(id))
-//        .set(published.eq(true))
-//        .get_result::<Post>(&connection)
-//        .expect(&format!("Unable to find post {}", id));
-//
-//    let res = serde_json::to_string("ok");
-//    return res
-//}
+#[derive(Deserialize)]
+struct UserParams {
+    name: String,
+}
+
+#[derive(Deserialize)]
+struct StagingParams {
+    name: String,
+}
+
+#[post("/add_user", format = "application/json", data = "<params>")]
+fn add_user(params: Json<UserParams>) -> Result<String> {
+    let connection = establish_connection();
+    let username = &params.name;
+    create_user(&connection, username.to_string());
+
+    let res = serde_json::to_string("ok");
+    return res
+}
+
+#[post("/add_staging", format = "application/json", data = "<params>")]
+fn add_staging(params: Json<UserParams>) -> Result<String> {
+    let connection = establish_connection();
+    let staging_name = &params.name;
+    create_staging(&connection, staging_name.to_string());
+
+    let res = serde_json::to_string("ok");
+    return res
+}
+
+fn create_user(conn: &PgConnection, username: String) -> User {
+    let new_user = NewUser {
+        name: username
+    };
+
+    diesel::insert_into(users)
+        .values(&new_user)
+        .get_result(conn)
+        .expect("Error saving new post")
+}
+
+fn create_staging(conn: &PgConnection, staging_name: String) -> Staging {
+    let new_staging = NewStaging {
+        name: staging_name
+    };
+
+    diesel::insert_into(stagings)
+        .values(&new_staging)
+        .get_result(conn)
+        .expect("Error saving new post")
+}
+
 
 #[get("/")]
 fn index() -> Result<String> {
-    use self::schema::users::dsl::*;
-    use self::schema::stagings::dsl::*;
-    use self::schema::users_stagings::dsl::*;
-    use diesel::pg::expression::dsl::any;
-
+//    // TODO: remove
+//    use std::thread;
+//    thread::sleep_ms(4000);
 
     let connection = establish_connection();
-    let user_results = users //.filter(published.eq(true))
-//        .limit(5)
+    let user_results = users
         .load::<User>(&connection)
         .expect("Error loading users");
 
     let stagings_results = stagings
-//        .limit(5)
         .load::<Staging>(&connection)
         .expect("Error loading stagings");
 
@@ -83,7 +127,6 @@ fn index() -> Result<String> {
 //        .filter(tags::id.eq(any(image_tag_ids)))
 //        .load::<Tag>(conn)
 //        .expect("could not load tags")
-
 
 //    let mut context = Context::new();
 //    let mut tera = Tera::default();
@@ -107,7 +150,7 @@ fn index() -> Result<String> {
 
 fn main() {
     rocket::ignite()
-        .mount("/", routes![index])
+        .mount("/", routes![index, add_user, add_staging])
 //        .attach(Template::fairing())
         .mount("/public", StaticFiles::from("./dist"))
         .launch();

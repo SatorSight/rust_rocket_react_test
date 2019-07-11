@@ -29,3 +29,15 @@ pub struct NewUserStaging {
     pub user_id: i32,
     pub staging_id: i32,
 }
+
+#[derive(Insertable)]
+#[table_name="users"]
+pub struct NewUser{
+    pub name: String
+}
+
+#[derive(Insertable)]
+#[table_name="stagings"]
+pub struct NewStaging{
+    pub name: String
+}
