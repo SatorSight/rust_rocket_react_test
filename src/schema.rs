@@ -2,6 +2,7 @@ table! {
     stagings (id) {
         id -> Int4,
         name -> Text,
+        busy -> Bool,
     }
 }
 

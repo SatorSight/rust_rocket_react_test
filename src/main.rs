@@ -30,7 +30,7 @@ use rocket_contrib::json::Json;
 use self::schema::users::dsl::*;
 use self::schema::stagings::dsl::*;
 use self::schema::users_stagings::dsl::*;
-use diesel::pg::expression::dsl::any;
+//use diesel::pg::expression::dsl::any;
 use self::models::{User, NewUser};
 
 pub fn establish_connection() -> PgConnection {
@@ -59,24 +59,97 @@ struct StagingParams {
     name: String,
 }
 
+#[derive(Deserialize)]
+struct UserDeleteParams {
+    user_id: i32,
+}
+
+#[derive(Deserialize)]
+struct StagingDeleteParams {
+    staging_id: i32,
+}
+
+#[derive(Deserialize)]
+struct StagingToggleParams {
+    staging_id: i32,
+}
+
 #[post("/add_user", format = "application/json", data = "<params>")]
 fn add_user(params: Json<UserParams>) -> Result<String> {
     let connection = establish_connection();
     let username = &params.name;
-    create_user(&connection, username.to_string());
+    let user = create_user(&connection, username.to_string());
+    let res = serde_json::to_string(&user);
+    return res
+}
 
+#[delete("/user", format = "application/json", data = "<params>")]
+fn delete_user(params: Json<UserDeleteParams>) -> Result<String> {
+    let connection = establish_connection();
+
+    let _user_id = &params.user_id;
+    destroy_user(&connection, *_user_id);
+    serde_json::to_string("ok")
+}
+
+#[post("/add_staging", format = "application/json", data = "<params>")]
+fn add_staging(params: Json<StagingParams>) -> Result<String> {
+    let connection = establish_connection();
+    let staging_name = &params.name;
+    let staging = create_staging(&connection, staging_name.to_string());
+    let res = serde_json::to_string(&staging);
+    return res
+}
+
+#[delete("/staging", format = "application/json", data = "<params>")]
+fn delete_staging(params: Json<StagingDeleteParams>) -> Result<String> {
+    let connection = establish_connection();
+
+    let _staging_id = &params.staging_id;
+    destroy_staging(&connection, *_staging_id);
+    serde_json::to_string("ok")
+}
+
+#[patch("/staging", format = "application/json", data = "<params>")]
+fn toggle_staging(params: Json<StagingToggleParams>) -> Result<String> {
+    let connection = establish_connection();
+    let _staging_id = &params.staging_id;
+
+    let _stag = stagings.find(1).first::<Staging>(&connection)
+        .expect("Error loading staging");
+
+    diesel::update(stagings.find(_staging_id))
+        .set(busy.eq(!_stag.busy))
+        .get_result::<Staging>(&connection)
+        .expect("Error loading staging");
+
+    serde_json::to_string("ok")
+}
+
+#[derive(Deserialize)]
+struct UserStagingParam {
+    user_id: i32,
+    staging_id: i32
+}
+
+#[post("/assign_staging_to_user", format = "application/json", data = "<params>")]
+fn add_staging_to_user(params: Json<UserStagingParam>) -> Result<String> {
+    let connection = establish_connection();
+    create_user_staging(&connection, params.user_id, params.staging_id);
     let res = serde_json::to_string("ok");
     return res
 }
 
-#[post("/add_staging", format = "application/json", data = "<params>")]
-fn add_staging(params: Json<UserParams>) -> Result<String> {
-    let connection = establish_connection();
-    let staging_name = &params.name;
-    create_staging(&connection, staging_name.to_string());
+fn create_user_staging(conn: &PgConnection, params_user_id: i32, params_staging_id: i32) {
+    let new_user_staging = NewUserStaging {
+        user_id: params_user_id,
+        staging_id: params_staging_id
+    };
 
-    let res = serde_json::to_string("ok");
-    return res
+    diesel::insert_into(users_stagings)
+        .values(&new_user_staging)
+        .get_result::<UsersStaging>(conn)
+        .expect("Error saving new post");
 }
 
 fn create_user(conn: &PgConnection, username: String) -> User {
@@ -88,6 +161,18 @@ fn create_user(conn: &PgConnection, username: String) -> User {
         .values(&new_user)
         .get_result(conn)
         .expect("Error saving new post")
+}
+
+fn destroy_user(conn: &PgConnection, _user_id: i32) {
+    diesel::delete(users.filter(self::schema::users::dsl::id.eq(_user_id)))
+        .execute(conn)
+        .expect("Error saving new user");
+}
+
+fn destroy_staging(conn: &PgConnection, _staging_id: i32) {
+    diesel::delete(stagings.filter(self::schema::stagings::dsl::id.eq(_staging_id)))
+        .execute(conn)
+        .expect("Error saving new staging");
 }
 
 fn create_staging(conn: &PgConnection, staging_name: String) -> Staging {
@@ -143,14 +228,22 @@ fn index() -> Result<String> {
 //    context.insert("data", &payload);
 
 //    Template::render("index", &context)
-//    "lol"
+//    "_user_id"
     let res = serde_json::to_string(&template_data);
     return res;
 }
 
 fn main() {
     rocket::ignite()
-        .mount("/", routes![index, add_user, add_staging])
+        .mount("/", routes![
+            index,
+            add_user,
+            add_staging,
+            add_staging_to_user,
+            delete_user,
+            delete_staging,
+            toggle_staging
+        ])
 //        .attach(Template::fairing())
         .mount("/public", StaticFiles::from("./dist"))
         .launch();

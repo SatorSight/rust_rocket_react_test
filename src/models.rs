@@ -12,6 +12,7 @@ pub struct User {
 pub struct Staging {
     pub id: i32,
     pub name: String,
+    pub busy: bool
 }
 
 #[derive(Identifiable, Queryable, Associations, Serialize, Deserialize, Debug)]
