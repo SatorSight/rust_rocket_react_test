@@ -2,6 +2,7 @@
 
 #[macro_use] extern crate rocket;
 #[macro_use] extern crate diesel;
+#[macro_use] extern crate rocket_include_static_resources;
 
 extern crate rocket_contrib;
 //extern crate tera;
@@ -32,6 +33,7 @@ use self::schema::stagings::dsl::*;
 use self::schema::users_stagings::dsl::*;
 //use diesel::pg::expression::dsl::any;
 use self::models::{User, NewUser};
+use rocket_include_static_resources::StaticResponse;
 
 pub fn establish_connection() -> PgConnection {
     dotenv().ok();
@@ -186,9 +188,13 @@ fn create_staging(conn: &PgConnection, staging_name: String) -> Staging {
         .expect("Error saving new post")
 }
 
-
 #[get("/")]
-fn index() -> Result<String> {
+fn index() -> StaticResponse {
+    static_response!("index.html")
+}
+
+#[get("/all")]
+fn all() -> Result<String> {
 //    // TODO: remove
 //    use std::thread;
 //    thread::sleep_ms(4000);
@@ -235,8 +241,17 @@ fn index() -> Result<String> {
 
 fn main() {
     rocket::ignite()
-        .mount("/", routes![
-            index,
+        .attach(StaticResponse::fairing(|resources| {
+            static_resources_initialize!(
+                resources,
+                "index.html", "dist/index.html",
+            );
+        }))
+        .mount("/", routes![index])
+
+        .mount("/public", StaticFiles::from("./dist"))
+        .mount("/api", routes![
+            all,
             add_user,
             add_staging,
             add_staging_to_user,
@@ -244,7 +259,8 @@ fn main() {
             delete_staging,
             toggle_staging
         ])
+
 //        .attach(Template::fairing())
-        .mount("/public", StaticFiles::from("./dist"))
+
         .launch();
 }

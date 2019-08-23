@@ -17,101 +17,62 @@ class IndexPage extends React.Component {
     }
 
     componentDidMount(){
-        fetch('/')
-            //todo set content-type on backend
-            .then(r => r.json())
-            .then(r => {
+        this.fetchFor('all')
+            .then(r =>
                 this.setState({
                     users: r.users,
                     stagings: r.stagings,
                     users_stagings: r.users_stagings,
-                });
-            })
+                }))
     }
 
+    //todo set content-type on backend
+    fetchFor = (path, data = null, method = 'GET') =>
+        fetch(`http://localhost:8000/api/${path}`, {
+            method: method,
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: data && JSON.stringify(data)
+        })
+            .then(r => r.json());
+
     addUser = () =>
-        this.fetchPost('add_user', { name: this.state.new_user_name })
-            .then(r => r.json())
+        this.fetchFor('add_user', { name: this.state.new_user_name })
             .then(r => this.setState({ users: [r, ...this.state.users] }));
 
     addStaging = () =>
-        this.fetchPost('add_staging', { name: this.state.new_staging_name })
-            .then(r => r.json())
-            .then(r => this.setState({ stagings: [r, ...this.state.stagings] }));
+        this.fetchFor('add_staging', { name: this.state.new_staging_name })
+            .then(s => this.setState({ stagings: [s, ...this.state.stagings] }));
 
     assignStagingToUser = (staging_id, user_id) =>
-        this.fetchPost('assign_staging_to_user', {
-            user_id: user_id,
-            staging_id: staging_id
-        })
-            .then(r => r.json())
-            .then(r => console.log(r));
+        this.fetchFor('assign_staging_to_user', { user_id: user_id, staging_id: staging_id }, 'UPDATE');
 
-    fetchPost = (path, data) => {
-        return fetch(`http://localhost:8000/${path}`, {
-            method: 'POST',
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(data)
-        })
-    };
+    deleteStaging = id => this.fetchFor('staging', { staging_id: id }, 'DELETE')
+        .then(() => this.setState({ stagings: this.state.stagings.filter(s => s.id !== id) }));
 
-    delete = (type, id) => {
-        const smth = type === 'user' ? this.state.users : this.state.stagings;
-        const key = `${type}_id`;
-        const key2 = `${type}s`;
-        const data = { [`${type}_id`]: id };
-        const state = { [`${type}s`]: smth };
-        // data[key] = id;
-        // const data = { id: id };
-        return fetch(`http://localhost:8000/${type}`, {
-            method: 'DELETE',
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(data)
-        })
-            .then(r => r.json())
-            .then(r => console.log(r))
-            .then(() => this.setState({ [key2]: smth.filter(s => s.id !== id) }))
-    };
+    deleteUser = id => this.fetchFor('user', { user_id: id }, 'DELETE')
+        .then(() => this.setState({ users: this.state.users.filter(s => s.id !== id) }));
 
     onStaging = (user, staging) =>
         this.state.users_stagings.find(us => us.user_id === user.id && us.staging_id === staging.id);
 
-    options = staging =>
-        this.state.users.map(u =>
-            <option key={u.id} selected={this.onStaging(u, staging)} value={u.id}>{u.name}</option>);
-
     changeNewUserName = e => this.setState({ new_user_name: e.target.value });
     changeNewStagingName = e => this.setState({ new_staging_name: e.target.value });
 
-    toggleBusy = staging => {
-        const data = { staging_id: staging.id };
-        return fetch('http://localhost:8000/staging', {
-            method: 'PATCH',
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(data)
-        })
-            .then(r => r.json())
-            .then(r => console.log(r))
-            .then(() => {
-                // let st = this.state.stagings.find(s => s.id === staging.id);
-                // st.busy = false;
+    toggleBusy = staging =>
+        this.fetchFor('staging', { staging_id: staging.id }, 'PATCH')
+            .then(() =>
                 this.setState({ stagings: this.state.stagings.map(s => {
                     if(s.id === staging.id)
                         s.busy = !s.busy;
                     return s;
-                })})
-            })
+                })}));
 
-    };
+    options = staging =>
+        this.state.users.map(u =>
+            <option key={u.id} selected={this.onStaging(u, staging)} value={u.id}>{u.name}</option>);
 
     render() {
         return (
@@ -138,7 +99,7 @@ class IndexPage extends React.Component {
                     {this.state.users.map(user =>
                         <div key={user.id}>
                             <span>{user.name}</span>
-                            <span onClick={() => this.delete('user', user.id)}>x</span>
+                            <span onClick={() => this.deleteUser(user.id)}>x</span>
                         </div>
                     )}
                 </div>
@@ -149,7 +110,7 @@ class IndexPage extends React.Component {
                     {this.state.stagings.map(staging =>
                         <div key={staging.id}>
                             <span>{staging.name}</span>
-                            <span onClick={() => this.delete('staging', staging.id)}>x</span>
+                            <span onClick={() => this.deleteStaging(staging.id)}>x</span>
                         </div>
                     )}
                 </div>
@@ -157,7 +118,7 @@ class IndexPage extends React.Component {
                 <button onClick={this.addUser}>add user</button>
                 <input type="text" value={this.state.new_staging_name} onChange={this.changeNewStagingName}/>
                 <button onClick={this.addStaging}>add staging</button>
-                <button onClick={() => this.assignStagingToUser(1,1)}>add first staging to first</button>
+                {/*<button onClick={() => this.assignStagingToUser(1,1)}>add first staging to first</button>*/}
             </div>
         );
     }
