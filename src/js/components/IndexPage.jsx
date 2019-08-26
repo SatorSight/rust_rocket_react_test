@@ -118,7 +118,6 @@ class IndexPage extends React.Component {
                 <button onClick={this.addUser}>add user</button>
                 <input type="text" value={this.state.new_staging_name} onChange={this.changeNewStagingName}/>
                 <button onClick={this.addStaging}>add staging</button>
-                {/*<button onClick={() => this.assignStagingToUser(1,1)}>add first staging to first</button>*/}
             </div>
         );
     }
