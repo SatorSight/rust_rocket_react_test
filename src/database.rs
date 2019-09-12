@@ -47,7 +47,7 @@ pub fn toggle_staging_busy(_staging: Staging) {
     diesel::update(stagings.find(_staging.id))
         .set(busy.eq(!_staging.busy))
         .get_result::<Staging>(&conn)
-        .expect("Error loading staging");
+        .expect("Error toggling staging busy");
 }
 
 pub fn create_user_staging(params_user_id: i32, params_staging_id: i32) {
@@ -60,7 +60,7 @@ pub fn create_user_staging(params_user_id: i32, params_staging_id: i32) {
     diesel::insert_into(users_stagings)
         .values(&new_user_staging)
         .get_result::<UsersStaging>(&conn)
-        .expect("Error saving new post");
+        .expect("Error saving new user_staging");
 }
 
 pub fn create_user(username: String) -> User {
@@ -72,21 +72,21 @@ pub fn create_user(username: String) -> User {
     diesel::insert_into(users)
         .values(&new_user)
         .get_result(&conn)
-        .expect("Error saving new post")
+        .expect("Error saving new user")
 }
 
 pub fn destroy_user(_user_id: i32) {
     let conn = establish_connection();
     diesel::delete(users.filter(users::dsl::id.eq(_user_id)))
         .execute(&conn)
-        .expect("Error saving new user");
+        .expect("Error destroying user");
 }
 
 pub fn destroy_staging(_staging_id: i32) {
     let conn = establish_connection();
     diesel::delete(stagings.filter(stagings::dsl::id.eq(_staging_id)))
         .execute(&conn)
-        .expect("Error saving new staging");
+        .expect("Error destroying staging");
 }
 
 pub fn create_staging(staging_name: String) -> Staging {
@@ -98,5 +98,5 @@ pub fn create_staging(staging_name: String) -> Staging {
     diesel::insert_into(stagings)
         .values(&new_staging)
         .get_result(&conn)
-        .expect("Error saving new post")
+        .expect("Error saving new staging")
 }

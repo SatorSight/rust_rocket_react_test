@@ -1,0 +1,23 @@
+.container {
+    display: flex;
+    flex-direction: column;
+}
+
+.row {
+    display: flex;
+    justify-content: space-between;
+}
+
+.staging_name, .staging_user, .toggleBusy {
+    min-width: 15rem;
+}
+
+.delete {
+    margin: 1rem;
+    border: 1px solid red;
+    min-width: 30px;
+    height: 30px;
+    display: inline-block;
+    text-align: center;
+    border-radius: 5px;
+}

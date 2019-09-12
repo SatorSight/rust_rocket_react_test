@@ -1,0 +1,27 @@
+FROM rustlang/rust:nightly
+
+
+
+# Set the working directory to /app
+ENV RUST_ROOT /var/www/app_name
+RUN mkdir -p $RUST_ROOT
+
+# Set working directory, where the commands will be ran:
+WORKDIR $RUST_ROOT
+
+# Copy the current directory contents into the container at /app
+COPY . .
+
+EXPOSE 8000
+RUN apt-get update -qq && apt-get install -y nodejs
+RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=DontWarn apt-key add - && \
+    echo "deb http://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list && \
+    apt-get update && \
+    apt-get install --no-install-recommends yarn
+RUN yarn build
+RUN rustc --version && cargo build
+#RUN
+# CMD [ "cargo", "run" ]
+# CMD cargo run
+
+CMD ROCKET_ENV=production cargo run

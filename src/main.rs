@@ -94,7 +94,7 @@ fn main() {
         .attach(StaticResponse::fairing(|resources| {
             static_resources_initialize!(
                 resources,
-                "index.html", "dist/index.html",
+                "index.html", "dist/index.html"
             );
         }))
         .mount("/", routes![index])

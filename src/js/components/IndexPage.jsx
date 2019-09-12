@@ -77,6 +77,7 @@ class IndexPage extends React.Component {
     render() {
         return (
             <div className="container">
+                <h1>Give me staging</h1>
                 {this.state.stagings.map(s =>
                     <div key={s.id} className="row">
                         <div className="staging_name">{s.name}</div>
@@ -86,7 +87,9 @@ class IndexPage extends React.Component {
                             </select>
                         </div>
                         <div className="toggleBusy">
-                            <button onClick={() => this.toggleBusy(s)} style={s.busy ? {color: 'red'} : {color: 'green'}}>
+                            <button onClick={() => this.toggleBusy(s)} style={
+                                s.busy ? {color: 'rgb(155, 249, 255)', backgroundColor: 'crimson'} : {color: '#f2ff54'}
+                            }>
                                 {s.busy ? 'Busy' : 'Free'}
                             </button>
                         </div>
@@ -99,7 +102,7 @@ class IndexPage extends React.Component {
                     {this.state.users.map(user =>
                         <div key={user.id}>
                             <span>{user.name}</span>
-                            <span onClick={() => this.deleteUser(user.id)}>x</span>
+                            <span className={'delete'} onClick={() => this.deleteUser(user.id)}>x</span>
                         </div>
                     )}
                 </div>
@@ -110,7 +113,7 @@ class IndexPage extends React.Component {
                     {this.state.stagings.map(staging =>
                         <div key={staging.id}>
                             <span>{staging.name}</span>
-                            <span onClick={() => this.deleteStaging(staging.id)}>x</span>
+                            <span className={'delete'} onClick={() => this.deleteStaging(staging.id)}>x</span>
                         </div>
                     )}
                 </div>
