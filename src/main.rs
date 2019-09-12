@@ -38,7 +38,7 @@ fn add_user(params: Json<structs::UserParams>) -> Result<String> {
 fn delete_user(params: Json<structs::UserDeleteParams>) -> Result<String> {
     let _user_id = &params.user_id;
     database::destroy_user(*_user_id);
-    serde_json::to_string("ok")
+    say_ok()
 }
 
 #[post("/add_staging", format = "application/json", data = "<params>")]
@@ -53,7 +53,7 @@ fn add_staging(params: Json<structs::StagingParams>) -> Result<String> {
 fn delete_staging(params: Json<structs::StagingDeleteParams>) -> Result<String> {
     let _staging_id = &params.staging_id;
     database::destroy_staging(*_staging_id);
-    serde_json::to_string("ok")
+    say_ok()
 }
 
 #[patch("/staging", format = "application/json", data = "<params>")]
@@ -62,14 +62,13 @@ fn toggle_staging(params: Json<structs::StagingToggleParams>) -> Result<String> 
     let _stag = database::find_staging(_staging_id);
 
     database::toggle_staging_busy(_stag);
-    serde_json::to_string("ok")
+    say_ok()
 }
 
 #[post("/assign_staging_to_user", format = "application/json", data = "<params>")]
 fn add_staging_to_user(params: Json<structs::UserStagingParam>) -> Result<String> {
     database::create_user_staging(params.user_id, params.staging_id);
-    let res = serde_json::to_string("ok");
-    return res
+    say_ok()
 }
 
 #[get("/")]
@@ -87,6 +86,10 @@ fn all() -> Result<String> {
 
     let res = serde_json::to_string(&template_data);
     return res;
+}
+
+fn say_ok() -> Result<String> {
+    serde_json::to_string("ok")
 }
 
 fn main() {
