@@ -26,28 +26,34 @@ class IndexPage extends React.Component {
                 }))
     }
 
-    //todo set content-type on backend
-    fetchFor = (path, data = null, method = 'GET') =>
-        fetch(`http://localhost:8000/api/${path}`, {
+    init = (method, data) => {
+        let obj = {
             method: method,
             headers: {
                 'Accept': 'application/json',
                 'Content-Type': 'application/json'
-            },
-            body: data && JSON.stringify(data)
-        })
+            }
+        };
+        if(method !== 'GET')
+            obj.body = data && JSON.stringify(data);
+        return obj
+    };
+
+    //todo set content-type on backend
+    fetchFor = (path, data = null, method = 'GET') =>
+        fetch(`http://localhost:8000/api/${path}`, this.init(method, data))
             .then(r => r.json());
 
     addUser = () =>
-        this.fetchFor('add_user', { name: this.state.new_user_name })
+        this.fetchFor('add_user', { name: this.state.new_user_name }, 'POST')
             .then(r => this.setState({ users: [r, ...this.state.users] }));
 
     addStaging = () =>
-        this.fetchFor('add_staging', { name: this.state.new_staging_name })
+        this.fetchFor('add_staging', { name: this.state.new_staging_name }, 'POST')
             .then(s => this.setState({ stagings: [s, ...this.state.stagings] }));
 
     assignStagingToUser = (staging_id, user_id) =>
-        this.fetchFor('assign_staging_to_user', { user_id: user_id, staging_id: staging_id }, 'UPDATE');
+        this.fetchFor('assign_staging_to_user', { user_id: user_id, staging_id: staging_id }, 'POST');
 
     deleteStaging = id => this.fetchFor('staging', { staging_id: id }, 'DELETE')
         .then(() => this.setState({ stagings: this.state.stagings.filter(s => s.id !== id) }));
