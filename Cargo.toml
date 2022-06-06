@@ -4,7 +4,7 @@ version = "0.1.0"
 authors = ["Eugene Nikolaev <satorsight@gmail.com>"]
 
 [dependencies]
-rocket = "0.4.2"
+rocket = "0.4.7"
 rocket_contrib = "0.4.2"
 
 diesel = { version = "1.0.0", features = ["postgres"] }
